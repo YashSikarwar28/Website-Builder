@@ -1,0 +1,11 @@
+const Footer = () => {
+    const year=new Date().getFullYear();
+  return (
+    <div className='text-center py-4 text-gray-400 text-sm border-t border-gray-800 mt-24'>
+      <p>Copyright © {year} Voltify</p>
+      <p>Coded with 💜 by Yash</p>
+    </div>
+  )
+}
+
+export default Footer
