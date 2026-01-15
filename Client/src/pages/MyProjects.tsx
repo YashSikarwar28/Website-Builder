@@ -1,6 +1,6 @@
 //Project page where we get the projects created by user
 
-//e.stopPropogation() = lets suppose we have a card in whichthere are multiple btns link preview,github and delete and we have an overall btn on the card with an onclick finction so if we click anywhere the card onclick will get triggered and beacuse the btns are also on the card so instead of redirecting to those btns destination it will redirect us to card onclick destination.
+//e.stopPropogation() = lets suppose we have a card in which there are multiple btns link preview,github and delete and we have an overall btn on the card with an onclick finction so if we click anywhere the card onclick will get triggered and beacuse the btns are also on the card so instead of redirecting to those btns destination it will redirect us to card onclick destination.
 //Thats why we use stoppropogation so every btn will work for its own respective webpage and the card will work for its own.
 
 
