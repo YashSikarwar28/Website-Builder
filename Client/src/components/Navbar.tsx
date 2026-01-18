@@ -5,6 +5,10 @@ import { Link, useNavigate } from "react-router-dom";
 const Navbar = () => {
   
     const [menuOpen, setMenuOpen] = useState(false);
+
+    //const[activeLink,setactiveLink]=useState("projects");
+
+
     const navigate=useNavigate()
   return (
     <>
@@ -19,10 +23,10 @@ const Navbar = () => {
         </Link>
 
         <div className="hidden md:flex items-center gap-8 transition duration-500">
-          <Link className="hover:underline" to="/">Home</Link>
-          <Link className="hover:underline" to="/projects">My Projects</Link>
-          <Link className="hover:underline" to="/community">Community</Link>
-          <Link className="hover:underline" to="/pricing">Pricing</Link>
+          <Link className="hover:text-purple-300" to="/">Home</Link>
+          <Link className="hover:text-purple-300" to="/projects">My Projects</Link>
+          <Link className="hover:text-purple-300" to="/community">Community</Link>
+          <Link className="hover:text-purple-300" to="/pricing">Pricing</Link>
         </div>
 
         <div className="flex items-center gap-3">

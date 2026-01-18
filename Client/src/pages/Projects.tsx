@@ -1,9 +1,22 @@
 //Project page where the website is builded
 
 import React, { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import type { Project } from "../types";
-import { Loader2Icon } from "lucide-react";
+import {
+  ArrowBigDownDashIcon,
+  EyeIcon,
+  EyeOffIcon,
+  FullscreenIcon,
+  LaptopIcon,
+  Loader2Icon,
+  MessageSquare,
+  MessageSquareIcon,
+  SaveIcon,
+  SmartphoneIcon,
+  TabletIcon,
+  XIcon,
+} from "lucide-react";
 import { dummyConversations, dummyProjects } from "../assets/assets";
 
 const Projects = () => {
@@ -17,7 +30,7 @@ const Projects = () => {
   const [isgenerating, setisgenerating] = useState(true);
 
   const [device, setdevice] = useState<"phone" | "tablet" | "desktop">(
-    "desktop"
+    "desktop",
   );
 
   const [isMenuOpen, setIsmenuopen] = useState(false);
@@ -52,7 +65,75 @@ const Projects = () => {
 
   return project ? (
     <div className="flex flex-col h-screen w-full bg-black text-white">
-      <h1>Projects</h1>
+      <div className="flex max-sm:flex-col sm:items-center gap-4 px-4 py-2 no-scrollbar">
+        {/* left part */}
+        <div>
+          {/* className="flex items-center gap-2 sm:min-w-90 text-nowrap" */}
+          <img
+            src="/favicon.svg"
+            alt=""
+            className="h-6 cursor-pointer"
+            onClick={() => navigate("/")}
+          />
+        </div>
+        <div className="max-w-64 sm:max-w-xs">
+          <p className="text-sm font-medium capitalize truncate">
+            {project.name}
+          </p>
+          <p className="text-xs text-gray-300 -mt-0.5">Wating for response</p>
+        </div>
+        <div className="sm:hidden flex-1 justify-end">
+          {isMenuOpen ? (
+            <MessageSquareIcon
+              onClick={() => setIsmenuopen(false)}
+              className="size-6 cursor-pointer"
+            />
+          ) : (
+            <XIcon
+              onClick={() => setIsmenuopen(true)}
+              className="size-6 cursor-pointer"
+            />
+          )}
+        </div>
+        {/* middle part */}
+        <div className="hidden sm:flex gap-2 bg-gray-900 p-1.5 rounded-md">
+          <SmartphoneIcon
+            onClick={() => setdevice("phone")}
+            className={`size-6 p-1 rounded cursor-pointer ${device === "phone" ? "bg-gray-700" : ""}`}
+          />
+          <TabletIcon
+            onClick={() => setdevice("tablet")}
+            className={`size-6 p-1 rounded cursor-pointer ${device === "tablet" ? "bg-gray-700" : ""}`}
+          />
+          <LaptopIcon
+            onClick={() => setdevice("desktop")}
+            className={`size-6 p-1 rounded cursor-pointer ${device === "desktop" ? "bg-gray-700" : ""}`}
+          />
+        </div>
+        {/* right part */}
+        <div className="flex items-center justify-end gap-3 flex-1 text-xs sm:text-sm">
+          <button className="max-sm:hidden bg-gray-800 hover:bg-gray-700 sm:rounded-sm text-white px-3.5 py-1 flex items-center gap-2 rounded transition-colors border border-gray-700">
+            <SaveIcon size={16} />
+            Save
+          </button>
+          <Link target="_blank" to={`/preview/${projectId}`}>
+            <FullscreenIcon size={16} />
+            Preview
+          </Link>
+          <button>
+            <ArrowBigDownDashIcon size={16} />
+            Download
+          </button>
+          <button>
+            {project.isPublished ? (
+              <EyeOffIcon size={16} />
+            ) : (
+              <EyeIcon size={16} />
+            )}
+            {project.isPublished ? "Unpublish" : "Publish"}
+          </button>
+        </div>
+      </div>
     </div>
   ) : (
     <div className="flex items-center justify-center h-screen">
