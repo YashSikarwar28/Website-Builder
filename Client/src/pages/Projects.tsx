@@ -48,6 +48,15 @@ const Projects = () => {
     }, 2000);
   };
 
+  //save your project
+  const saveProject = async () => {};
+
+  //download your code
+  const downloadCode = () => {};
+
+  //publishing your code
+  const togglePublish = async () => {};
+
   useEffect(() => {
     fetchProjects();
   }, []);
@@ -95,6 +104,7 @@ const Projects = () => {
             />
           )}
         </div>
+
         {/* middle part */}
         <div className="hidden sm:flex gap-2 bg-gray-900 p-1.5 rounded-md">
           <SmartphoneIcon
@@ -110,21 +120,40 @@ const Projects = () => {
             className={`size-6 p-1 rounded cursor-pointer ${device === "desktop" ? "bg-gray-700" : ""}`}
           />
         </div>
+
         {/* right part */}
         <div className="flex items-center justify-end gap-3 flex-1 text-xs sm:text-sm">
-          <button className="max-sm:hidden bg-gray-800 hover:bg-gray-700 sm:rounded-sm text-white px-3.5 py-1 flex items-center gap-2 rounded transition-colors border border-gray-700">
-            <SaveIcon size={16} />
+          <button
+            onClick={saveProject}
+            disabled={isSaving}
+            className="max-sm:hidden bg-gray-800 hover:bg-gray-700 sm:rounded-sm text-white px-3.5 py-1 flex items-center gap-2 rounded transition-colors border border-gray-700"
+          >
+            {isSaving ? (
+              <Loader2Icon className="animate-spin" size={16} />
+            ) : (
+              <SaveIcon size={16} />
+            )}
             Save
           </button>
-          <Link target="_blank" to={`/preview/${projectId}`}>
+          <Link
+            target="_blank"
+            to={`/preview/${projectId}`}
+            className="flex items-center gap-2 px-4 py-1 rounded sm:rounded-sm border border-gray-700 hover:border-purple-700 transition-colors"
+          >
             <FullscreenIcon size={16} />
             Preview
           </Link>
-          <button>
+          <button
+            onClick={downloadCode}
+            className="bg-linear-to-br from-blue-700 to-blue-600 hover:from-blue-600 hover:to-blue-500 text-white px-3.5 py-1 flex items-center gap-2 rounded sm:rounded-sm transition-colors"
+          >
             <ArrowBigDownDashIcon size={16} />
             Download
           </button>
-          <button>
+          <button
+            onClick={togglePublish}
+            className="bg-linear-to-br from-indigo-600 to-indigo-600 hover:from-indigo-600 hover:to-indigo-500 text-white px-3.5 py-1 flex items-center gap-2 rounded sm:rounded-sm transition-colors"
+          >
             {project.isPublished ? (
               <EyeOffIcon size={16} />
             ) : (
@@ -133,6 +162,11 @@ const Projects = () => {
             {project.isPublished ? "Unpublish" : "Publish"}
           </button>
         </div>
+      </div>
+
+      <div className="flex-1 flex overflow-auto">
+        <div>Sidebar</div>
+        <div className="flex-1 p-2 pl-0">project preview</div>
       </div>
     </div>
   ) : (
