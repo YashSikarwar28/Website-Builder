@@ -17,7 +17,8 @@ import {
   TabletIcon,
   XIcon,
 } from "lucide-react";
-import { dummyConversations, dummyProjects } from "../assets/assets";
+import { dummyConversations, dummyProjects, dummyVersion } from "../assets/assets";
+import Sidebar from "../components/Sidebar";
 
 const Projects = () => {
   const { projectId } = useParams();
@@ -26,7 +27,7 @@ const Projects = () => {
   const [project, setproject] = useState<Project | null>(null);
   const [loading, setloading] = useState(true);
 
-  //chtbox btn - while the message is loading the btn is disabled
+  //chatbox btn - while the message is loading the btn is disabled
   const [isgenerating, setisgenerating] = useState(true);
 
   const [device, setdevice] = useState<"phone" | "tablet" | "desktop">(
@@ -41,7 +42,7 @@ const Projects = () => {
     const project = dummyProjects.find((project) => project.id === projectId);
     setTimeout(() => {
       if (project) {
-        setproject({ ...project, conversation: dummyConversations });
+        setproject({ ...project, conversation: dummyConversations, versions:dummyVersion});
         setloading(false);
         setisgenerating(project.current_code ? false : true);
       }
@@ -165,7 +166,7 @@ const Projects = () => {
       </div>
 
       <div className="flex-1 flex overflow-auto">
-        <div>Sidebar</div>
+        <Sidebar isMenuOpen={isMenuOpen} project={project} setproject={(p)=>setproject(p)} isgenerating={isgenerating} setisgenerating={setisgenerating}/>
         <div className="flex-1 p-2 pl-0">project preview</div>
       </div>
     </div>
