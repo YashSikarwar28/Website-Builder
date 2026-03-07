@@ -123,7 +123,7 @@ const Sidebar = ({
                 </div>
               )
             }
-            <div />
+            <div ref={messageRef}/>
         </div>
 
         {/* Input area for sending message */}

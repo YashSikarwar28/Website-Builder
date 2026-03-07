@@ -1,6 +1,6 @@
 //Project page where the website is builded
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import type { Project } from "../types";
 import {
@@ -17,8 +17,13 @@ import {
   TabletIcon,
   XIcon,
 } from "lucide-react";
-import { dummyConversations, dummyProjects, dummyVersion } from "../assets/assets";
+import {
+  dummyConversations,
+  dummyProjects,
+  dummyVersion,
+} from "../assets/assets";
 import Sidebar from "../components/Sidebar";
+import ProjextPreview, { type ProjectPreviewRef } from "../components/ProjextPreview";
 
 const Projects = () => {
   const { projectId } = useParams();
@@ -37,12 +42,18 @@ const Projects = () => {
   const [isMenuOpen, setIsmenuopen] = useState(false);
   const [isSaving, setisSaving] = useState(false);
 
+  const previewRef=useRef<ProjectPreviewRef>(null);
+
   //fetching the project data
   const fetchProjects = async () => {
     const project = dummyProjects.find((project) => project.id === projectId);
     setTimeout(() => {
       if (project) {
-        setproject({ ...project, conversation: dummyConversations, versions:dummyVersion});
+        setproject({
+          ...project,
+          conversation: dummyConversations,
+          versions: dummyVersion,
+        });
         setloading(false);
         setisgenerating(project.current_code ? false : true);
       }
@@ -165,9 +176,19 @@ const Projects = () => {
         </div>
       </div>
 
+      {/* Sidebar */}
       <div className="flex-1 flex overflow-auto">
-        <Sidebar isMenuOpen={isMenuOpen} project={project} setproject={(p)=>setproject(p)} isgenerating={isgenerating} setisgenerating={setisgenerating}/>
-        <div className="flex-1 p-2 pl-0">project preview</div>
+        <Sidebar
+          isMenuOpen={isMenuOpen}
+          project={project}
+          setproject={(p) => setproject(p)}
+          isgenerating={isgenerating}
+          setisgenerating={setisgenerating}
+        />
+
+        <div className="flex-1 p-2 pl-0">
+          <ProjextPreview ref={previewRef} project={project} isgenerating={isgenerating} device={device}/>
+        </div>
       </div>
     </div>
   ) : (
