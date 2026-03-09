@@ -25,6 +25,7 @@ import {
 import Sidebar from "../components/Sidebar";
 import ProjextPreview, { type ProjectPreviewRef } from "../components/ProjextPreview";
 
+
 const Projects = () => {
   const { projectId } = useParams();
   const navigate = useNavigate();
@@ -63,8 +64,23 @@ const Projects = () => {
   //save your project
   const saveProject = async () => {};
 
-  //download your code
-  const downloadCode = () => {};
+
+  //download your code(index.html)
+  const downloadCode = () => {
+    const code=previewRef.current?.getcode() || project?.current_code;
+    if (!code) {
+      if(isgenerating){
+        return;
+      }
+      return;
+    }
+    const element=document.createElement('a');
+    const file=new Blob([code],{type:"text.html"})
+    element.href=URL.createObjectURL(file);
+    element.download="index.html";
+    document.body.appendChild(element);
+    element.click();
+  };
 
   //publishing your code
   const togglePublish = async () => {};

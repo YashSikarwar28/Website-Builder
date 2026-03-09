@@ -1,9 +1,8 @@
-//Section where user can see how his website looks on giving the prompt
+//Section where user can see how the website looks on giving the prompt
 
-import React, { forwardRef, useEffect, useRef, useState } from "react";
+import React, { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
 import type { Project } from "../types";
 import { iframeScript } from "../assets/assets";
-import { Phone } from "lucide-react";
 import EditorPanel from "./EditorPanel";
 
 interface ProjectPreviewProps {
@@ -31,6 +30,30 @@ const ProjextPreview = forwardRef<ProjectPreviewRef, ProjectPreviewProps>(
       tablet:'w-[768px]',
       desktop:'w-full'
     }
+
+    //to download the generated website code
+    useImperativeHandle(ref,()=>({
+      getcode:()=>{
+        const doc=iframeRef.current?.contentDocument;
+        if(!doc) return undefined;
+
+        doc.querySelectorAll('ai.selected-element,[data-ai-selected]').forEach((el)=>{
+          el.classList.remove('ai-selected-element');
+          el.removeAttribute('data-ai-selected');
+          (el as HTMLElement).style.outline='';
+        })
+
+        const previewStyle=doc.getElementById('ai-preview-style');
+        if(previewStyle) previewStyle.remove();
+
+        const previewScript=doc.getElementById('ai-preview-script');
+        if(previewScript) previewScript.remove();
+
+        const html=doc.documentElement.outerHTML;
+        return html;
+      }
+    }))
+
     useEffect(()=>{
       const handleMsg=(event:MessageEvent)=>{
           if (event.data.type==='ELEMENT_SELECTED') {
