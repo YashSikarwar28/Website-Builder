@@ -23,8 +23,9 @@ import {
   dummyVersion,
 } from "../assets/assets";
 import Sidebar from "../components/Sidebar";
-import ProjextPreview, { type ProjectPreviewRef } from "../components/ProjextPreview";
-
+import ProjextPreview, {
+  type ProjectPreviewRef,
+} from "../components/ProjextPreview";
 
 const Projects = () => {
   const { projectId } = useParams();
@@ -43,7 +44,7 @@ const Projects = () => {
   const [isMenuOpen, setIsmenuopen] = useState(false);
   const [isSaving, setisSaving] = useState(false);
 
-  const previewRef=useRef<ProjectPreviewRef>(null);
+  const previewRef = useRef<ProjectPreviewRef>(null);
 
   //fetching the project data
   const fetchProjects = async () => {
@@ -64,20 +65,19 @@ const Projects = () => {
   //save your project
   const saveProject = async () => {};
 
-
   //download your code(index.html)
   const downloadCode = () => {
-    const code=previewRef.current?.getcode() || project?.current_code;
+    const code = previewRef.current?.getcode() || project?.current_code;
     if (!code) {
-      if(isgenerating){
+      if (isgenerating) {
         return;
       }
       return;
     }
-    const element=document.createElement('a');
-    const file=new Blob([code],{type:"text.html"})
-    element.href=URL.createObjectURL(file);
-    element.download="index.html";
+    const element = document.createElement("a");
+    const file = new Blob([code], { type: "text.html" });
+    element.href = URL.createObjectURL(file);
+    element.download = "index.html";
     document.body.appendChild(element);
     element.click();
   };
@@ -203,7 +203,12 @@ const Projects = () => {
         />
 
         <div className="flex-1 p-2 pl-0">
-          <ProjextPreview ref={previewRef} project={project} isgenerating={isgenerating} device={device}/>
+          <ProjextPreview
+            ref={previewRef}
+            project={project}
+            isgenerating={isgenerating}
+            device={device}
+          />
         </div>
       </div>
     </div>

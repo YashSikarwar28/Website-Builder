@@ -1,0 +1,6 @@
+# ignore node modules globally
+node_modules/
+
+# ignore env files in client and server folders
+client/.env
+server/.env
