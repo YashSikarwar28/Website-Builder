@@ -3,7 +3,7 @@ import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import prisma from "./prisma.js";
 
-const trustedorigin=process.env.TRUSTED_ORIGINS?.split(',') || [];
+const trustedOrigins=process.env.TRUSTED_ORIGINS?.split(',') || [];
 
 export const auth = betterAuth({
   database: prismaAdapter(prisma, {
@@ -12,7 +12,10 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
   },
-  trustedorigin,
+  user:{
+    deleteUser:{enabled:true}
+  },
+  trustedOrigins, //the spelling should be exactly same otherwise it will cause errror
   baseURL:process.env.BETTER_AUTH_URL!,
   secret:process.env.BETTER_AUTH_SECRET!,
   advanced:{
@@ -22,7 +25,7 @@ export const auth = betterAuth({
             attributes:{
                 httpOnly:true,
                 secure:process.env.NODE_ENV === 'production',
-                sameSite:'none',
+                sameSite:process.env.NODE_ENV === 'production'?'none':'lax',
                 path:'/',
             }
         }
