@@ -20,6 +20,7 @@
     "dotenv": "^17.3.1",
     "epress": "^0.0.1-security",
     "express": "^5.2.1",
+    "openai": "^6.33.0",
     "pg": "^8.20.0"
   },
   "devDependencies": {
