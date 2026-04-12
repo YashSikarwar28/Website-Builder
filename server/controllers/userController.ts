@@ -22,7 +22,7 @@ export const getUSerCredits = async (req: Request, res: Response) => {
   }
 };
 
-//controller function to reate new project
+//controller function to create new project
 export const createUserProject = async (req: Request, res: Response) => {
   const userId = req.userId;
   try {
@@ -207,8 +207,8 @@ export const getUSerProject = async (req: Request, res: Response) => {
     }
 
     const projects = await prisma.websiteProject.findMany({
-      where: {userId},
-      orderBy:{updatedAt:'desc'}
+      where: { userId },
+      orderBy: { updatedAt: "desc" },
     });
     res.json({ projects });
   } catch (error: any) {
@@ -231,28 +231,29 @@ export const togglepublish = async (req: Request, res: Response) => {
       ? projectIdParam[0]
       : projectIdParam;
 
-    const project=await prisma.websiteProject.findFirst({
-      where:{id:projectId,userId}
-    })
+    const project = await prisma.websiteProject.findFirst({
+      where: { id: projectId, userId },
+    });
 
-    if(!project){
-      return res.status(400).json({message:'Project not found'})
+    if (!project) {
+      return res.status(400).json({ message: "Project not found" });
     }
 
     await prisma.websiteProject.update({
-      where:{id:projectId},
-      data:{isPublished:!project.isPublished}
-    })
-    
-    res.json({message:project.isPublished?'Project Unpublished' : 'Project Published'});
+      where: { id: projectId },
+      data: { isPublished: !project.isPublished },
+    });
 
+    res.json({
+      message: project.isPublished
+        ? "Project Unpublished"
+        : "Project Published",
+    });
   } catch (error: any) {
     res.status(500).json({ message: error.message });
     console.log(error.code || error.message);
   }
 };
 
-
 //controller function to purchase credits
-export const purchaseCredits = async (req: Request, res: Response) => {
-};
+export const purchaseCredits = async (req: Request, res: Response) => {};

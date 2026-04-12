@@ -1,4 +1,4 @@
-//creating route to call the backend
+//Creating route to call the backend
 
 import express from 'express'
 import { createUserProject, getUSerCredits, getUSerProject, purchaseCredits, togglepublish } from '../controllers/userController.js';
