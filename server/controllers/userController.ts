@@ -173,7 +173,7 @@ Return ONLY the enhanced prompt, nothing else. Make it detailed but concise (2-3
       data: {
         role: "assistant",
         content:
-          "Your website is ready. You can review it and request any changes.",
+          "Your website is ready. You can now review it and request any changes.",
         projectId: project.id,
       },
     });

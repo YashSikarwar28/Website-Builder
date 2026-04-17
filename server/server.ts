@@ -4,13 +4,15 @@ import cors from "cors";
 import { toNodeHandler } from "better-auth/node";
 import { auth } from "./lib/auth.js";
 import userRouter from "./routes/userRoutes.js";
+import projectRouter from "./routes/projectRoutes.js";
 
 const app = express();
 
-const port = 3000;
+const port = 5000;
 
 const corsoptions = {
-  origin: process.env.TRUSTED_ORIGINS?.split(",") || [],
+  origin:"http://localhost:5173",
+  //origin: process.env.TRUSTED_ORIGINS?.split(",") || [],
   credentials: true,
 };
 
@@ -25,6 +27,7 @@ app.get("/", (req: Request, res: Response) => {
 });
 
 app.use('/api/user',userRouter);
+app.use('/api/project',projectRouter);
 
 app.listen(port, () => {
   console.log(`Server is running at http://localhost:${port}`);

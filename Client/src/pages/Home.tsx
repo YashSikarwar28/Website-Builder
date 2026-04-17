@@ -1,20 +1,39 @@
+//Home page ui
+
+import api from "@/configs/axios";
+import { authClient } from "@/lib/auth-client";
 import { Loader2Icon } from "lucide-react";
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 const Home = () => {
+  const { data: session } = authClient.useSession();
+  const navigate = useNavigate();
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
 
+  //user will enter prompt
   const onSubmitHandler = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    setLoading(true);
-    //Simulate API call
-    setTimeout(() => {
+    try {
+      if (!session?.user) {
+        return toast.error("Sign in required");
+      } else if (!input.trim()) {
+        return toast.error("Please enter a prompt");
+      }
+      setLoading(true);
+      const { data } = await api.post("/api/user/project", {
+        initial_prompt: input,
+      });
       setLoading(false);
-    }, 3000);
+      navigate(`/projects/${data.projectId}`);
+    } catch (error: any) {
+      setLoading(false);
+      console.log(error?.response?.data?.message || error.message);
+      console.log(error);
+    }
   };
-
   return (
     <section className="flex flex-col items-center text-white text-sm pb-20 px-4 font-poppins">
       {/* BACKGROUND IMAGE
@@ -83,7 +102,7 @@ const Home = () => {
         </button>
       </form>
 
-          {/* company logo
+      {/* company logo
       <div className="flex flex-wrap items-center justify-center gap-16 md:gap-20 mx-auto mt-16">
         <img
           className="max-w-28  md:max-w-32"

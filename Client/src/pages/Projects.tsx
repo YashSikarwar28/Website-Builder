@@ -1,3 +1,5 @@
+//7:17
+
 //Project page where the website is builded
 
 import React, { useEffect, useRef, useState } from "react";
@@ -17,15 +19,13 @@ import {
   TabletIcon,
   XIcon,
 } from "lucide-react";
-import {
-  dummyConversations,
-  dummyProjects,
-  dummyVersion,
-} from "../assets/assets";
 import Sidebar from "../components/Sidebar";
 import ProjextPreview, {
   type ProjectPreviewRef,
 } from "../components/ProjextPreview";
+import api from "@/configs/axios";
+import { toast } from "sonner";
+import { ERROR_CODES } from "better-auth/plugins";
 
 const Projects = () => {
   const { projectId } = useParams();
@@ -48,18 +48,15 @@ const Projects = () => {
 
   //fetching the project data
   const fetchProjects = async () => {
-    const project = dummyProjects.find((project) => project.id === projectId);
-    setTimeout(() => {
-      if (project) {
-        setproject({
-          ...project,
-          conversation: dummyConversations,
-          versions: dummyVersion,
-        });
-        setloading(false);
-        setisgenerating(project.current_code ? false : true);
-      }
-    }, 2000);
+    try {
+      const { data } = await api.get(`/api/user/project/${projectId}`);
+      setproject(data.project);
+      setisgenerating(data.project.current_code ? false : true);
+      setloading(false);
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || error.message);
+      console.log(error);
+    }
   };
 
   //save your project
@@ -86,8 +83,11 @@ const Projects = () => {
   const togglePublish = async () => {};
 
   useEffect(() => {
-    fetchProjects();
-  }, []);
+    if (project && !project.current_code) {
+      const intervalId = setInterval(fetchProjects, 10000);
+      return () => clearInterval(intervalId);
+    }
+  }, [project]);
 
   //loading animation
   if (loading) {

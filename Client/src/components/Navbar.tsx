@@ -1,14 +1,33 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { assets } from "../assets/assets";
 import { Link, useNavigate } from "react-router-dom";
 import { authClient } from "@/lib/auth-client";
-import {UserButton} from '@daveyplate/better-auth-ui'
+import { UserButton } from "@daveyplate/better-auth-ui";
+import api from "@/configs/axios";
+import { toast } from "sonner";
 
 const Navbar = () => {
   const [menuOpen, setMenuOpen] = useState(false);
-
+  const [credits, setCredits] = useState(0);
   //const[activeLink,setactiveLink]=useState("projects");
-  const {data:session}=authClient.useSession();
+  const { data: session } = authClient.useSession();
+
+  //for getting user credits
+  const getCredits = async () => {
+    try {
+      const { data } = await api.get("/api/user/credits");
+      setCredits(data.credits);
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || error.message);
+      console.log(error);
+    }
+  };
+
+  useEffect(() => {
+    if (session?.user) {
+      getCredits();
+    }
+  }, [session?.user]);
 
   const navigate = useNavigate();
   return (
@@ -36,18 +55,21 @@ const Navbar = () => {
         </div>
 
         <div className="flex items-center gap-3">
-         { !session?.user ? (
-          <button
-            onClick={() => navigate("/auth/signin")}
-            className="px-6 py-2 max-sm:text-sm bg-indigo-600 active:scale-95 hover:bg-indigo-700 transition rounded"
-          >
-            Get started
-          </button>
-         ) : 
-         (
-          <UserButton size="icon"/>
-         ) 
-        }
+          {!session?.user ? (
+            <button
+              onClick={() => navigate("/auth/signin")}
+              className="px-6 py-2 max-sm:text-sm bg-indigo-600 active:scale-95 hover:bg-indigo-700 transition rounded"
+            >
+              Get started
+            </button>
+          ) : (
+            <>
+              <button className="bg-white/10 px-5 py-1.5 text-xs sm:text-sm border text-gray-300 rounded-full">
+                Credits : <span className="text-indigo-400">{credits}</span>
+              </button>
+              <UserButton size="icon" />
+            </>
+          )}
 
           <button
             id="open-menu"
