@@ -26,6 +26,7 @@ const Home = () => {
       const { data } = await api.post("/api/user/project", {
         initial_prompt: input,
       });
+      console.log("Response : ",data);
       setLoading(false);
       navigate(`/projects/${data.projectId}`);
     } catch (error: any) {

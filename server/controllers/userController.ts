@@ -1,45 +1,53 @@
-//This complete code is for creating website by the user
-//openai - is used for the conversation between user and ai model
-
 import { Request, Response } from "express";
 import prisma from "../lib/prisma.js";
 import openai from "../configs/openai.js";
 
-//get user credits for free plan
-export const getUSerCredits = async (req: Request, res: Response) => {
+/* -------------------- GET USER CREDITS -------------------- */
+export const getUserCredits = async (req: Request, res: Response) => {
   try {
     const userId = req.userId;
+
     if (!userId) {
       return res.status(401).json({ message: "Unauthorized" });
     }
+
     const user = await prisma.user.findUnique({
       where: { id: userId },
     });
-    res.json({ credits: user?.credits });
+
+    res.json({ credits: user?.credits ?? 0 });
   } catch (error: any) {
     res.status(500).json({ message: error.message });
-    console.log(error.code || error.message);
   }
 };
 
-//controller function to create new project
+/* -------------------- CREATE PROJECT -------------------- */
 export const createUserProject = async (req: Request, res: Response) => {
-  const userId = req.userId;
+  let projectId: string | null = null;
+
   try {
+    const userId = req.userId;
     const { initial_prompt } = req.body;
 
     if (!userId) {
       return res.status(401).json({ message: "Unauthorized" });
     }
+
+    if (!initial_prompt?.trim()) {
+      return res.status(400).json({ message: "Prompt is required" });
+    }
+
     const user = await prisma.user.findUnique({
       where: { id: userId },
     });
-    if (user && user.credits < 5) {
+
+    if (!user || user.credits < 5) {
       return res.status(403).json({
-        message: "Insufficient credits. Please add more credits to continue.",
+        message: "Insufficient credits",
       });
     }
-    //creating new project
+
+    /* ✅ CREATE PROJECT */
     const project = await prisma.websiteProject.create({
       data: {
         name:
@@ -48,15 +56,22 @@ export const createUserProject = async (req: Request, res: Response) => {
             : initial_prompt,
         initial_prompt,
         userId,
+        status: "pending",
       },
     });
 
-    //counting total credits used by a user
+    projectId = project.id;
+
+    /* ✅ UPDATE USER */
     await prisma.user.update({
       where: { id: userId },
-      data: { totalCreation: { increment: 1 } },
+      data: {
+        totalCreation: { increment: 1 },
+        credits: { decrement: 5 },
+      },
     });
 
+    /* ✅ SAVE USER MESSAGE */
     await prisma.conversation.create({
       data: {
         role: "user",
@@ -65,143 +80,141 @@ export const createUserProject = async (req: Request, res: Response) => {
       },
     });
 
-    //decreasing five credits every time user enters a new prompt
-    await prisma.user.update({
-      where: { id: userId },
-      data: { credits: { decrement: 5 } },
-    });
-
+    /* 🚀 SEND RESPONSE FAST */
     res.json({ projectId: project.id });
 
-    //enhance user prompt
-    const promptEnhaceResponse = await openai.chat.completions.create({
-      model: "z-ai/glm-4.5-air:free",
-      messages: [
-        {
-          role: "system",
-          content: `
-                You are a prompt enhancement specialist. Take the user's website request and expand it into a detailed, comprehensive prompt that will help create the best possible website.
+    /* ================= AI PROCESS ================= */
 
-    Enhance this prompt by:
-    1. Adding specific design details (layout, color scheme, typography)
-    2. Specifying key sections and features
-    3. Describing the user experience and interactions
-    4. Including modern web design best practices
-    5. Mentioning responsive design requirements
-    6. Adding any missing but important elements
-
-Return ONLY the enhanced prompt, nothing else. Make it detailed but concise (2-3 paragraphs max).`,
-        },
-        {
-          role: "user",
-          content: initial_prompt,
-        },
-      ],
+    /* 🔄 SET GENERATING */
+    await prisma.websiteProject.update({
+      where: { id: project.id },
+      data: { status: "generating" },
     });
 
-    const enhancedprompt = promptEnhaceResponse.choices[0].message.content;
+    let rawCode = "";
 
-    await prisma.conversation.create({
-      data: {
-        role: "assistant",
-        content: `Enhanced Prompt : "${enhancedprompt}`,
-        projectId: project.id,
-      },
-    });
+    try {
+      const response: any = await openai.chat.completions.create({
+        model: "openai/gpt-3.5-turbo", // ✅ stable model
+        messages: [
+          {
+            role: "system",
+            content: `Return ONLY a complete HTML document.
 
-    await prisma.conversation.create({
-      data: {
-        role: "assistant",
-        content: `Your website is being generated based on the prompt you provided.`,
-        projectId: project.id,
-      },
-    });
+Rules:
+- Start with <!DOCTYPE html>
+- Include <html>, <head>, <body>
+- Use Tailwind CDN
+- Make it responsive
+- No explanation
+- No markdown
+- Only HTML output`,
+          },
+          {
+            role: "user",
+            content: initial_prompt,
+          },
+        ],
+      });
 
-    //generated website code
-    const codeGenerationResponse = await openai.chat.completions.create({
-      model: "z-ai/glm-4.5-air:free",
-      messages: [
-        {
-          role: "system",
-          content: `You are an expert web developer. Create a complete, production-ready, single-page website based on this request: "${enhancedprompt}"
+      /* 🔥 DEBUG */
+      console.log("FULL AI RESPONSE:", JSON.stringify(response, null, 2));
 
-    CRITICAL REQUIREMENTS:
-    - You MUST output valid HTML ONLY. 
-    - Use Tailwind CSS for ALL styling
-    - Include this EXACT script in the <head>: <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-    - Use Tailwind utility classes extensively for styling, animations, and responsiveness
-    - Make it fully functional and interactive with JavaScript in <script> tag before closing </body>
-    - Use modern, beautiful design with great UX using Tailwind classes
-    - Make it responsive using Tailwind responsive classes (sm:, md:, lg:, xl:)
-    - Use Tailwind animations and transitions (animate-*, transition-*)
-    - Include all necessary meta tags
-    - Use Google Fonts CDN if needed for custom fonts
-    - Use placeholder images from https://placehold.co/600x400
-    - Use Tailwind gradient classes for beautiful backgrounds
-    - Make sure all buttons, cards, and components use Tailwind styling
+      rawCode = response?.choices?.[0]?.message?.content;
 
-    CRITICAL HARD RULES:
-    1. You MUST put ALL output ONLY into message.content.
-    2. You MUST NOT place anything in "reasoning", "analysis", "reasoning_details", or any hidden fields.
-    3. You MUST NOT include internal thoughts, explanations, analysis, comments, or markdown.
-    4. Do NOT include markdown, explanations, notes, or code fences.
+      if (!rawCode) {
+        console.log("❌ AI RETURNED EMPTY CONTENT");
+      }
+    } catch (err) {
+      console.log("❌ AI ERROR:", err);
+    }
 
-    The HTML should be complete and ready to render as-is with Tailwind CSS.`,
+    /* 🧹 CLEAN HTML */
+    let cleanCode = "";
+
+    if (rawCode) {
+      const startIndex =
+        rawCode.indexOf("<!DOCTYPE html") !== -1
+          ? rawCode.indexOf("<!DOCTYPE html")
+          : rawCode.indexOf("<html");
+
+      if (startIndex !== -1) {
+        cleanCode = rawCode.substring(startIndex).trim();
+      }
+    }
+
+    /* ❌ FAIL CASE */
+    if (!cleanCode) {
+      console.log("❌ CLEAN CODE FAILED");
+
+      await prisma.websiteProject.update({
+        where: { id: project.id },
+        data: { status: "failed" },
+      });
+
+      await prisma.conversation.create({
+        data: {
+          role: "assistant",
+          content: "Code generation failed. Please try again.",
+          projectId: project.id,
         },
-        {
-          role: "user",
-          content: enhancedprompt || "",
-        },
-      ],
-    });
+      });
 
-    const code = codeGenerationResponse.choices[0].message.content || "";
+      await prisma.user.update({
+        where: { id: userId },
+        data: { credits: { increment: 5 } },
+      });
 
-    //create version for the project
+      return;
+    }
+
+    /* ✅ SAVE VERSION */
     const version = await prisma.version.create({
       data: {
-        code: code
-          .replace(/```[a-z]*\n?/gi, "")
-          .replace(/```$/g, "")
-          .trim(),
+        code: cleanCode,
         description: "Initial Version",
         projectId: project.id,
       },
     });
 
-    await prisma.conversation.create({
-      data: {
-        role: "assistant",
-        content:
-          "Your website is ready. You can now review it and request any changes.",
-        projectId: project.id,
-      },
-    });
-
+    /* ✅ FINAL UPDATE */
     await prisma.websiteProject.update({
       where: { id: project.id },
       data: {
-        current_code: code
-          .replace(/```[a-z]*\n?/gi, "")
-          .replace(/```$/g, "")
-          .trim(),
+        current_code: cleanCode,
         current_version_index: version.id,
+        status: "ready",
       },
     });
+
+    console.log("WEBSITE GENERATED SUCCESSFULLY");
+
   } catch (error: any) {
-    await prisma.user.update({
-      where: { id: userId },
-      data: { credits: { increment: 5 } },
+    console.log("FINAL ERROR:", error);
+
+    if (projectId) {
+      await prisma.websiteProject.update({
+        where: { id: projectId },
+        data: { status: "failed" },
+      });
+
+      await prisma.user.update({
+        where: { id: req.userId },
+        data: { credits: { increment: 5 } },
+      });
+    }
+
+    return res.status(500).json({
+      message: error.message,
     });
-    console.log(error.code || error.message);
-    return res.status(500).json({ message: error.message });
   }
 };
 
-//controller function to get single user project
-export const getUSerProject = async (req: Request, res: Response) => {
+/* -------------------- GET ALL PROJECTS -------------------- */
+export const getUserProjects = async (req: Request, res: Response) => {
   try {
     const userId = req.userId;
+
     if (!userId) {
       return res.status(401).json({ message: "Unauthorized" });
     }
@@ -210,33 +223,61 @@ export const getUSerProject = async (req: Request, res: Response) => {
       where: { userId },
       orderBy: { updatedAt: "desc" },
     });
+
     res.json({ projects });
   } catch (error: any) {
     res.status(500).json({ message: error.message });
-    console.log(error.code || error.message);
   }
 };
 
-//controller function to toggle project publish
-export const togglepublish = async (req: Request, res: Response) => {
+/* -------------------- GET SINGLE PROJECT -------------------- */
+export const getUserProject = async (req: Request, res: Response) => {
   try {
     const userId = req.userId;
+    const projectId = req.params.projectId as string;
+
     if (!userId) {
       return res.status(401).json({ message: "Unauthorized" });
     }
 
-    const projectIdParam = req.params.projectId;
+    const project = await prisma.websiteProject.findFirst({
+      where: {
+        id: projectId,
+        userId,
+      },
+      include: {
+        conversation: true,
+        versions: true,
+      },
+    });
 
-    const projectId = Array.isArray(projectIdParam)
-      ? projectIdParam[0]
-      : projectIdParam;
+    if (!project) {
+      return res.status(404).json({ message: "Project not found" });
+    }
+
+    res.json({ project });
+  } catch (error: any) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+/* -------------------- TOGGLE PUBLISH -------------------- */
+export const togglepublish = async (req: Request, res: Response) => {
+  try {
+    const userId = req.userId;
+
+    if (!userId) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const projectId = req.params.projectId as string;
 
     const project = await prisma.websiteProject.findFirst({
       where: { id: projectId, userId },
     });
 
     if (!project) {
-      return res.status(400).json({ message: "Project not found" });
+      return res.status(404).json({ message: "Project not found" });
     }
 
     await prisma.websiteProject.update({
@@ -251,9 +292,11 @@ export const togglepublish = async (req: Request, res: Response) => {
     });
   } catch (error: any) {
     res.status(500).json({ message: error.message });
-    console.log(error.code || error.message);
   }
 };
 
-//controller function to purchase credits
-export const purchaseCredits = async (req: Request, res: Response) => {};
+/* -------------------- PURCHASE CREDITS -------------------- */
+export const purchaseCredits = async (_req: Request, res: Response) => {
+  return res.json({ message: "Not implemented yet" });
+};
+

@@ -51,6 +51,7 @@ model WebsiteProject {
   current_version_index String  @default("")
   userId                String
   isPublished           Boolean @default(false)
+  status                String  @default("pending")
 
   // Relations
   conversation Conversation[]

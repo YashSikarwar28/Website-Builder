@@ -26,7 +26,7 @@ export interface Project{
     id:string;
     name:string;
     initial_prompt:string;
-    current_code:string;
+    current_code?:string;
     createdAt:string;
     updatedAt:string;
     userId:string;
@@ -36,4 +36,5 @@ export interface Project{
     conversation:Message[];
     versions:Version[];
     current_version_index:string;
+    status:"pending" | "generating" | "ready" | "failed";
 }

@@ -54,7 +54,7 @@ export const makeRevision = async (req: Request, res: Response) => {
 
     //Enhance user prompt
     const promptEnhanceResponse = await openai.chat.completions.create({
-      model: "z-ai/glm-4.5-air:free",
+      model: "qwen/qwen3-coder:free",
       messages: [
         {
           role: "system",
@@ -95,7 +95,7 @@ Return ONLY the enhanced request, nothing else. Keep it concise (1-2 sentences).
 
     //Generate website code
     const codeGenerationResponse = await openai.chat.completions.create({
-      model: "z-ai/glm-4.5-air:free",
+      model: "qwen/qwen3-coder:free",
       messages: [
         {
           role: "system",
@@ -120,6 +120,21 @@ Return ONLY the enhanced request, nothing else. Keep it concise (1-2 sentences).
       ],
     });
     const code = codeGenerationResponse.choices[0].message.content || "";
+
+    if (!code) {
+      await prisma.conversation.create({
+        data: {
+          role: "assistant",
+          content: "Unable to generate the code, please try again",
+          projectId,
+        },
+      });
+      await prisma.user.update({
+        where: { id: userId },
+        data: { credits: { increment: 5 } },
+      })
+      return;
+    }
 
     const version = await prisma.version.create({
       data: {
@@ -221,13 +236,11 @@ export const deleteProject = async (req: Request, res: Response) => {
       where: { id: projectId, userId },
     });
     res.json({ message: "Project deleted successfully" });
-
   } catch (error: any) {
     console.log(error.code || error.message);
     res.status(500).json({ message: error.message });
   }
 };
-
 
 //Controller function for getting project code for preview
 export const projectPreview = async (req: Request, res: Response) => {
@@ -235,100 +248,93 @@ export const projectPreview = async (req: Request, res: Response) => {
     const userId = req.userId;
     const { projectId } = req.params;
 
-    if(!userId){
-        return res.status(401).json({message:'Unauthorized'})
+    if (!userId) {
+      return res.status(401).json({ message: "Unauthorized" });
     }
     if (!projectId || Array.isArray(projectId)) {
       return res.status(400).json({ message: "Invalid projectId" });
     }
 
-    const project=await prisma.websiteProject.findFirst({
-        where:{id:projectId,userId},
-        include:{versions:true}
-    })
+    const project = await prisma.websiteProject.findFirst({
+      where: { id: projectId, userId },
+      include: { versions: true },
+    });
 
-    if(!project){
-        return res.status(404).json({message:'Project not found'});
+    if (!project) {
+      return res.status(404).json({ message: "Project not found" });
     }
 
-    res.json({project})
-
+    res.json({ project });
   } catch (error: any) {
     console.log(error.code || error.message);
     res.status(500).json({ message: error.message });
   }
 };
-
 
 //Controller function for getting published project
 export const getPublishedProjects = async (req: Request, res: Response) => {
   try {
-    const projects=await prisma.websiteProject.findMany({
-        where:{isPublished:true},
-        include:{user:true}
-    })
+    const projects = await prisma.websiteProject.findMany({
+      where: { isPublished: true },
+      include: { user: true },
+    });
 
-    res.json({projects})
-
+    res.json({ projects });
   } catch (error: any) {
     console.log(error.code || error.message);
     res.status(500).json({ message: error.message });
   }
 };
-
 
 //get a single project by id
 export const getProjectID = async (req: Request, res: Response) => {
   try {
-    const {projectId}=req.params;
-    if(!projectId || Array.isArray(projectId)){
-        return res.status(400).json({message:'Invalid project id'})
+    const { projectId } = req.params;
+    if (!projectId || Array.isArray(projectId)) {
+      return res.status(400).json({ message: "Invalid project id" });
     }
-    const project=await prisma.websiteProject.findFirst({
-        where:{id:projectId},
-    })
-    
-    if(!project || project.isPublished===false || !project?.current_code){
-        return res.status(404).json({message:'Project not found'})
+    const project = await prisma.websiteProject.findFirst({
+      where: { id: projectId },
+    });
+
+    if (!project || project.isPublished === false || !project?.current_code) {
+      return res.status(404).json({ message: "Project not found" });
     }
 
-    res.json({code:project.current_code})
-
+    res.json({ code: project.current_code });
   } catch (error: any) {
     console.log(error.code || error.message);
     res.status(500).json({ message: error.message });
   }
 };
 
-
 //Controller to save project
 export const saveProjectCode = async (req: Request, res: Response) => {
   try {
-    const userId=req.userId;
-    const {projectId}=req.params;
-    const {code}=req.body;
+    const userId = req.userId;
+    const { projectId } = req.params;
+    const { code } = req.body;
 
-    if(!userId){
-        return res.status(401).json({message:'Unauthorized'})
+    if (!userId) {
+      return res.status(401).json({ message: "Unauthorized" });
     }
-    if(!code){
-        return res.status(401).json({message:'Code is required'})
+    if (!code) {
+      return res.status(401).json({ message: "Code is required" });
     }
-    if(!projectId || Array.isArray(projectId)){
-        return res.status(404).json({message:'Project not found'})
+    if (!projectId || Array.isArray(projectId)) {
+      return res.status(404).json({ message: "Project not found" });
     }
-    
-    const project=await prisma.websiteProject.findUnique({
-        where:{id:projectId,userId}
-    })
+
+    const project = await prisma.websiteProject.findUnique({
+      where: { id: projectId, userId },
+    });
 
     await prisma.websiteProject.update({
-        where:{id:projectId},
-        data:{current_code:code,current_version_index:''}
-    })
+      where: { id: projectId },
+      data: { current_code: code, current_version_index: "" },
+    });
 
-    res.json({message:'Project saved successfully'})
-
+    res.json({ message: "Project saved successfully" });
   } catch (error: any) {
     console.log(error.code || error.message);
     res.status(500).json({ message: error.message });
